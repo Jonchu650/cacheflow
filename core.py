@@ -1,9 +1,8 @@
-# Cacheflow - cache discovery & utilities
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Cacheflow core
 import os
 import bpy
 
-# Cache kinds
+# kinds
 KIND_ICONS = {
     'CLOTH': 'MOD_CLOTH',
     'SOFTBODY': 'MOD_SOFT',
@@ -67,11 +66,6 @@ def ptcache_status(cache):
         return 'BAKING'
     if cache.is_baked:
         return 'BAKED'
-    # Playback can leave frames in the cache without a real bake. The info
-    # string is the only runtime indicator; parse numbers instead of words
-    # so this also works on translated UIs ("120 frames in memory", etc.).
-    # Threshold of 2: Blender always re-caches a frame or two at the current
-    # playhead right after a free - that residue is not "cached data".
     import re
     info = (getattr(cache, "info", "") or "")
     nums = [int(n) for n in re.findall(r"\d+", info)]
@@ -129,7 +123,6 @@ def stale_hint(frame_end, scene):
 
 def iter_caches(scene):
     """Yield dicts describing every cache in the scene."""
-    # Rigid body world (scene-level)
     rbw = scene.rigidbody_world
     if rbw is not None and rbw.point_cache is not None:
         c = rbw.point_cache
@@ -141,10 +134,7 @@ def iter_caches(scene):
                    disk=c.use_disk_cache)
 
     for ob in scene.objects:
-        # Particle systems
         for i, psys in enumerate(ob.particle_systems):
-            # Static hair (no dynamics) never simulates - its point cache is
-            # meaningless noise in a cache list, so skip it.
             st = getattr(psys, "settings", None)
             if (st is not None and getattr(st, "type", "") == 'HAIR'
                     and not getattr(psys, "use_hair_dynamics", False)):
