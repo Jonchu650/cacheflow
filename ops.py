@@ -1,5 +1,4 @@
-# Cacheflow - operators
-# SPDX-License-Identifier: GPL-3.0-or-later
+# cacheflow - operators
 import os
 import bpy
 from bpy.types import Operator
@@ -149,7 +148,7 @@ def _get_store(tgt):
 
 
 def _save_original_range(context, item):
-    """Remember the pre-bake range (only once - re-bakes keep the oldest)."""
+    """Remember the pre-bake range"""
     try:
         tgt = _range_target(context.scene, item)
         if tgt is None:
@@ -179,7 +178,7 @@ def _restore_original_range(context, item):
         fs, fe, flag = (int(v) for v in store[key])
         _apply_frame_range(context, item, fs, fe)
         if item.kind == 'GNBAKE' and not flag:
-            # custom sim range was originally OFF - switch it back off
+            # custom sim range was originally off, switch it back off
             ob = context.scene.objects.get(item.object_name)
             md = ob.modifiers.get(item.modifier_name) if ob else None
             if md:
@@ -208,9 +207,6 @@ def _invalidate_ptcache(context, cache, ob):
             ob.update_tag(refresh={'DATA'})
         except Exception:
             pass
-    # Rewind to the start frame. Off frame 1, rigid bodies (and some other
-    # sims) catch up by re-simulating 1..playhead on the next evaluation,
-    # which would instantly re-cache everything we just freed.
     try:
         if context.scene.frame_current != context.scene.frame_start:
             context.scene.frame_set(context.scene.frame_start)
@@ -277,11 +273,6 @@ def _bake_item(context, item, free=False, delete_files=True, from_cache=False):
             if cache is None:
                 return False, f"{item.label}: cache not found (rescan?)"
             ob = scene.objects.get(item.object_name) if item.object_name else None
-            # Minimal override, verified working on Blender 5.x:
-            #   with context.temp_override(point_cache=cache):
-            #       bpy.ops.ptcache.free_bake()
-            # ptcache operators locate the cache owner themselves; extra
-            # context members are unnecessary.
             with context.temp_override(point_cache=cache):
                 if free:
                     if bpy.ops.ptcache.free_bake.poll():
@@ -289,8 +280,6 @@ def _bake_item(context, item, free=False, delete_files=True, from_cache=False):
                     else:
                         return False, f"{item.label}: free_bake refused this context"
                 elif from_cache:
-                    # Convert the frames simulated so far (playback) into a
-                    # bake, without re-simulating anything.
                     bpy.ops.ptcache.bake_from_cache()
                 else:
                     if cache.is_baked:  # re-bake: release the old bake first
@@ -303,7 +292,7 @@ def _bake_item(context, item, free=False, delete_files=True, from_cache=False):
                                "simulation first, then bake from cache")
             if not free:
                 return True, f"{item.label}: baked"
-            # -- verify the free actually happened --
+            # verify the free actually happened 
             if cache.is_baked:
                 return False, f"{item.label}: Blender did not release this bake"
             _invalidate_ptcache(context, cache, ob)
@@ -323,7 +312,7 @@ def _bake_item(context, item, free=False, delete_files=True, from_cache=False):
                     bpy.ops.fluid.free_all()
                 else:
                     if dom is not None and dom.has_cache_baked_any:
-                        bpy.ops.fluid.free_all()  # re-bake cleanly
+                        bpy.ops.fluid.free_all() 
                     bpy.ops.fluid.bake_all()
             if free:
                 nfiles = nbytes = 0
@@ -345,8 +334,6 @@ def _bake_item(context, item, free=False, delete_files=True, from_cache=False):
                     try:
                         bpy.ops.object.geometry_node_bake_delete_single(**kwargs)
                     except (AttributeError, RuntimeError):
-                        # older 4.x builds: fall back to clearing all sim
-                        # caches on this object
                         bpy.ops.object.simulation_nodes_cache_delete(selected=True)
                 else:
                     bpy.ops.object.geometry_node_bake_single(**kwargs)
@@ -563,8 +550,6 @@ class CACHEFLOW_OT_bake_all(Operator):
     def execute(self, context):
         refresh_items(context)
         items = context.scene.cacheflow_items
-        # Bake EVERYTHING in the list (already-baked caches are re-baked).
-        # From-cache mode only applies to point caches.
         self._queue = [i for i, it in enumerate(items)
                        if it.status != 'BAKING'
                        and (self.mode != 'FROMCACHE' or it.kind in core.PTCACHE_KINDS)]
@@ -608,9 +593,7 @@ class CACHEFLOW_OT_free_all(Operator):
         items = context.scene.cacheflow_items
         failed = []
         n = 0
-        # Free EVERYTHING, regardless of displayed status: RAM playback
-        # frames don't always register as baked, and freeing an already
-        # empty cache is a harmless no-op.
+        # free everything but somehow still broken sometimes like bro what
         for it in items:
             if it.status == 'BAKING':
                 continue
