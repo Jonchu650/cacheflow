@@ -1,5 +1,4 @@
-# Cacheflow - UI
-# SPDX-License-Identifier: GPL-3.0-or-later
+# Cacheflow ui
 from bpy.types import Panel, UIList
 from . import core
 
@@ -30,8 +29,6 @@ class CACHEFLOW_UL_caches(UIList):
             status.label(text=core.human_size(item.size_bytes))
         elif not item.disk:
             status.label(text="RAM")
-        # Inline action: bake if there's nothing cached, free otherwise.
-        # While a bake runs, show no button at all.
         if item.status != 'BAKING':
             action = status.row(align=True)
             if item.status in {'BAKED', 'PARTIAL'}:
