@@ -4,10 +4,10 @@ id = "cacheflow"
 version = "0.2.0"
 name = "Cacheflow"
 tagline = "Every physics cache in your scene - one panel, one bake queue"
-maintainer = "Jonathan Lamas <jonathanlamas39@gmail.com>"
+maintainer = "Jonchu"
 type = "add-on"
 
-website = "https://superhivemarket.com"
+website = ""
 
 tags = ["Physics", "Pipeline", "Simulation"]
 
