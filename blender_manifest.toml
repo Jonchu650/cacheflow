@@ -1,0 +1,19 @@
+schema_version = "1.0.0"
+
+id = "cacheflow"
+version = "0.2.0"
+name = "Cacheflow"
+tagline = "Every physics cache in your scene - one panel, one bake queue"
+maintainer = "Jonathan Lamas <jonathanlamas39@gmail.com>"
+type = "add-on"
+
+website = "https://superhivemarket.com"
+
+tags = ["Physics", "Pipeline", "Simulation"]
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+files = "Read cache directories to report disk usage"
